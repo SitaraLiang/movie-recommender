@@ -1,3 +1,20 @@
+# Data 
+data/clean/
+
+# Checkpoints
+.ipynb_checkpoints/
+
+# Virtual Environment
+env/
+venv/
+.venv/
+
+# PyCharm
+.idea/
+.vscode/
+.DS_Store
+.ipynb_checkpoints/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
