@@ -1,6 +1,5 @@
 # Data 
-data/clean/
-data/raw/
+data/processed/
 
 # Checkpoints
 .ipynb_checkpoints/
