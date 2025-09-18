@@ -58,43 +58,11 @@ This project uses the **MovieLens dataset** for educational purposes. Movie meta
 
 ## Usage
 
-### 1. Preprocess the data
+### Preprocess the data
 
 ``` bash
 python scripts/run_preprocessing.py
 ```
-
-### 2. Instantiate the RAG pipeline
-
-```python
-from src.rag_pipeline import RAGPipeline
-
-# Initialize pipeline with default retriever and generator
-rag = RAGPipeline(max_context_tokens=1000)
-```
-
-### 3. Run a query
-
-```python
-query = "I like action movies with a strong plot"
-response = rag.process_query(query)
-print(response)
-```
-
-### 4. Streaming mode
-
-```python
-stream = rag.process_query("Show me comedies", top_k=5, stream=True)
-for token in stream:
-    print(token, end="", flush=True)
-```
-
-### 5. Reset conversation
-
-```python
-rag.reset_conversation()
-```
-
 
 ## Testing
 
@@ -127,5 +95,4 @@ python tests/test_rag_pipeline.py
 * [Hugging Face Transformers](https://huggingface.co/transformers/)
 * [FAISS](https://github.com/facebookresearch/faiss) for fast similarity search
 * [MovieLens Dataset](https://grouplens.org/datasets/movielens/)
-* Inspiration from RAG pipelines in modern LLM applications
 
