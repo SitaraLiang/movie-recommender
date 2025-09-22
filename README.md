@@ -2,11 +2,6 @@
 
 A Retrieval-Augmented Generation (RAG) system for movie recommendations. This project combines a retriever (FAISS-based) and a generator (LLM-backed) to provide natural-language movie suggestions based on user queries. Supports streaming generation, conversation memory, and flexible retrieval criteria.
 
-# Movie Recommender RAG Pipeline
-
-A **Retrieval-Augmented Generation (RAG)** system for movie recommendations. This project combines a **retriever** (FAISS-based) and a **generator** (LLM-backed) to provide **natural-language movie suggestions** based on user queries. Supports **streaming generation**, **conversation memory**, and flexible retrieval criteria.
-
-
 ## Features
 
 * **End-to-end movie recommendation pipeline**
