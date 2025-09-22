@@ -23,8 +23,8 @@ class MovieGenerator:
     """
 
     def __init__(self,
-        model_name="meta-llama/Llama-2-7b-chat-hf",
-        #model_name="sshleifer/tiny-gpt2", # Use a small model for debugging
+        #model_name="meta-llama/Llama-2-7b-chat-hf",
+        model_name="sshleifer/tiny-gpt2", # Use a small model for debugging
         device: Optional[str] = None,
         temperature: float = 0.6,
         top_p: float = 0.9,
@@ -54,6 +54,8 @@ class MovieGenerator:
         self.backend = "huggingface" 
         # automatically download and cache locally the right tokenizer for the given model_name
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_name,
             device_map="auto" if self.device is None else None # place the model across available hardware automatically
@@ -139,9 +141,16 @@ class MovieGenerator:
         Args:
             prompt: Prepared prompt including system + context + user parts
         """
-        input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids.to(self.model.device)
+        # inputs: dictionary containing both input_ids and attention_mask
+        inputs = self.tokenizer(
+            prompt,
+            return_tensors="pt",
+            padding=True,
+            truncation=True).to(self.model.device)
+        
         generated_ids = self.model.generate(
-            input_ids,
+            **inputs,
+            pad_token_id=self.tokenizer.pad_token_id,
             max_new_tokens=self.max_new_tokens,
             do_sample=True,
             temperature=self.temperature,
@@ -149,7 +158,8 @@ class MovieGenerator:
             return_dict_in_generate=True,
             output_scores=True
         )
-        for token_id in generated_ids.sequences[0][input_ids.shape[-1]:]:
+
+        for token_id in generated_ids.sequences[0][inputs["input_ids"].shape[-1]:]:
             yield self.tokenizer.decode(token_id, skip_special_tokens=True)
 
     def generate_with_context(self, user_query: str, contexts: List[str], stream: bool = False) -> str:

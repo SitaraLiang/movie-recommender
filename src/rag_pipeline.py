@@ -20,7 +20,7 @@ from retriever import MovieRetriever
 
 class RAGPipeline:
     """
-    Orchestrator for a Retrieval-Augmented Generation (RAG) pipeline with conversation memory.
+    Orchestrator for a RAG pipeline with conversation memory.
     Supports streaming generation.
     """
 
@@ -30,19 +30,14 @@ class RAGPipeline:
         self.max_context_tokens = max_context_tokens
         self.conversation_history: List[Dict[str, str]] = []  # {"user": str, "assistant": str}
 
-    def process_query(
-        self,
-        user_query: str,
-        top_k: int = 10,
-        stream: bool = False
-    ) -> Any:
+    def process_query(self, user_query: str,top_k: int = 10, stream: bool = False) -> Any:
         """
         End-to-end RAG: retrieve contexts, include conversation memory, generate response.
         Supports streaming mode.
         """
         try:
             # Step 1: Retrieve contexts
-            contexts = self.retrieve_contexts(user_query, top_k=top_k)
+            contexts = self.retriever.retrieve(user_query, top_k=top_k)
 
             # Step 2: Include conversation memory
             conversation_context = self._build_conversation_context()
@@ -54,36 +49,12 @@ class RAGPipeline:
             )
 
             # Step 4: Generate response
-            if stream:
-                return self._generate_stream(user_query, truncated_contexts)
-            else:
-                response = self.generator.generate_with_context(user_query, truncated_contexts, stream=False)
-                self.conversation_history.append({"user": user_query, "assistant": response})
-                return response
+            response = self.generator.generate_with_context(user_query, truncated_contexts, stream)
+            self.conversation_history.append({"user": user_query, "assistant": response})
+            return response
 
         except Exception as e:
-            return f"⚠️ Error processing query: {e}"
-
-    def _generate_stream(self, user_query: str, contexts: List[str]) -> Generator[str, None, None]:
-        """
-        Streaming generator that yields tokens incrementally and updates conversation memory at the end.
-        """
-        stream_gen = self.generator.generate_with_context(user_query, contexts, stream=True)
-        buffer = ""
-        try:
-            for token in stream_gen:
-                buffer += token
-                yield token
-        finally:
-            # At the end, save the completed response in memory
-            self.conversation_history.append({"user": user_query, "assistant": buffer})
-
-    def retrieve_contexts(self, user_query: str, top_k: int = 10) -> List[str]:
-        try:
-            results = self.retriever.retrieve(user_query, top_k=top_k)
-            return [str(r) for r in results if isinstance(r, str)]
-        except Exception as e:
-            return [f"[Retriever error: {e}]"]
+            return f"Error processing query: {e}"
 
     def _build_conversation_context(self) -> List[str]:
         """Format past conversation turns into strings for inclusion in the prompt."""
@@ -96,17 +67,14 @@ class RAGPipeline:
         """Truncate contexts + conversation memory to fit token budget."""
         if not contexts:
             return []
-
-        def estimate_tokens(text: str) -> int:
-            return int(len(text.split()) * 1.3)
-
-        query_tokens = estimate_tokens(user_query)
+        
+        query_tokens = int(len(user_query.split()) * 1.3)
         budget = max_tokens - query_tokens
 
         truncated = []
         used_tokens = 0
         for ctx in contexts:
-            tokens = estimate_tokens(ctx)
+            tokens = int(len(ctx.split()) * 1.3)
             if used_tokens + tokens <= budget:
                 truncated.append(ctx)
                 used_tokens += tokens
